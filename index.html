@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  <title>BARSO Schedule</title>
+
+  <meta name="description" content="A schedule tracker for the 2024 BARSO Competition">
+  <meta name="author" content="Edward Chang">
+</head>
+<body>
+
+<div class="container mt-5">
+  <h2>BARSO Schedule</h2>
+  <div id="schedule" class="mt-4  text-center">
+    <h5 id="blockName">Nothing's happening...</h5>
+    <div class="row justify-content-between">
+      <div id="startTime" class="col-4"></div>
+      <div id="endTime" class="col-4"></div>
+    </div>
+    <div class="progress mt-3">
+      <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <p class="card-text mt-2" id="timeRemaining"></p>
+  </div>
+</div>
+
+<script>
+  // Include your JSON data here or load it from a separate file
+  const scheduleData = {
+    "schedule": [
+      {
+        "name": "Registration / Impound",
+        "start": "2024-02-03T15:15:00.000Z",
+        "end": "2024-02-03T16:15:00.000Z"
+      },
+      {
+        "name": "Block 1",
+        "start": "2024-02-03T16:30:00.000Z",
+        "end": "2024-02-03T17:30:00.000Z"
+      },
+      {
+        "name": "Block 2",
+        "start": "2024-02-03T17:45:00.000Z",
+        "end": "2024-02-03T18:45:00.000Z"
+      },
+      {
+        "name": "Block 3",
+        "start": "2024-02-03T19:00:00.000Z",
+        "end": "2024-02-03T20:00:00.000Z"
+      },
+      {
+        "name": "Block 4",
+        "start": "2024-02-03T20:15:00.000Z",
+        "end": "2024-02-03T21:15:00.000Z"
+      },
+      {
+        "name": "Block 5",
+        "start": "2024-02-03T21:30:00.000Z",
+        "end": "2024-02-03T22:30:00.000Z"
+      },
+      {
+        "name": "Block 6",
+        "start": "2024-02-03T22:45:00.000Z",
+        "end": "2024-02-03T23:45:00.000Z"
+      }
+    ]
+  };
+  const scheduleContainer = document.getElementById('schedule');
+  const blockNameElement = document.getElementById('blockName');
+  const startTimeElement = document.getElementById('startTime');
+  const endTimeElement = document.getElementById('endTime');
+  const progressBarElement = document.getElementById('progressBar');
+  const timeRemainingElement = document.getElementById('timeRemaining');
+  const blockGap = 15;
+
+  function updateTimer() {
+    const now = new Date();
+    let currentBlock = null;
+    let nextBlock = null;
+    scheduleData.schedule.forEach((block, index) => {
+      const startTime = new Date(block.start);
+      const endTime = new Date(block.end);
+      const nextStart = new Date(block.end);
+      nextStart.setMinutes(nextStart.getMinutes() + blockGap)
+      // Find the current block
+      if (now >= startTime && now < nextStart) {
+        currentBlock = block;
+        if (scheduleData[index + 1]) {
+          nextBlock = scheduleData[index + 1];
+        }
+      }
+    });
+    if (currentBlock) {
+      let startTime = new Date(currentBlock.start);
+      let endTime = new Date(currentBlock.end);
+      if (now >= endTime) {
+        let nextStart = new Date(currentBlock.end);
+        nextStart.setMinutes(nextStart.getMinutes() + blockGap);
+        startTime = endTime;
+        endTime = nextStart;
+        
+        blockNameElement.textContent = `Next block!`;
+        startTimeElement.textContent = `Start Time: ${startTime.toLocaleTimeString()}`;
+        endTimeElement.textContent = `End Time: ${endTime.toLocaleTimeString()}`;
+
+        let timeRemaining = endTime - now;
+
+        if (timeRemaining < 0) {
+          timeRemaining = 0;
+        }
+
+        const progressPercentage = ((now - startTime) / (endTime - startTime)) * 100;
+        progressBarElement.style.width = `${progressPercentage}%`;
+        progressBarElement.setAttribute('aria-valuenow', progressPercentage);
+
+        const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+        timeRemainingElement.textContent = `Time until next Block: ${hours}h ${minutes}m ${seconds}s`;
+      } else {
+        blockNameElement.textContent = `${currentBlock.name}`;
+        startTimeElement.textContent = `Start Time: ${startTime.toLocaleTimeString()}`;
+        endTimeElement.textContent = `End Time: ${endTime.toLocaleTimeString()}`;
+
+        let timeRemaining = endTime - now;
+
+        if (timeRemaining < 0) {
+          timeRemaining = 0;
+        }
+
+        const progressPercentage = ((now - startTime) / (endTime - startTime)) * 100;
+        progressBarElement.style.width = `${progressPercentage}%`;
+        progressBarElement.setAttribute('aria-valuenow', progressPercentage);
+
+        const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+
+        timeRemainingElement.textContent = `Time Remaining: ${hours}h ${minutes}m ${seconds}s`;
+      }
+    } else {
+      blockNameElement.textContent = "Nothing's happening right now...";
+      startTimeElement.textContent = '';
+      endTimeElement.textContent = '';
+      progressBarElement.style.width = '0%';
+      progressBarElement.setAttribute('aria-valuenow', '0');
+      timeRemainingElement.textContent = '';
+    }
+  }
+
+  // Update the timer every second
+  setInterval(updateTimer, 1000);
+
+  // Initial update
+  updateTimer();
+</script>
+</body>
+</html>
